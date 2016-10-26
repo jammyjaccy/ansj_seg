@@ -1,56 +1,49 @@
 Ansj中文分词
 ==================
 
+ [![1.X Build Status](https://travis-ci.org/NLPchina/ansj_seg.svg?branch=master)](https://travis-ci.org/NLPchina/ansj_seg) [![Gitter](https://badges.gitter.im/NLPchina/ansj_seg.svg)](https://gitter.im/NLPchina/ansj_seg?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-#####使用帮助[http://ansjsun.github.io/ansj_seg/](http://ansjsun.github.io/ansj_seg/)
 
-#####在线测试地址<a href="http://demo.ansj.org">http://demo.ansj.org</href>
+#####使用帮助 : [3.x版本及之前](http://nlpchina.github.io/ansj_seg/) , [5.x版本及之后](https://github.com/NLPchina/ansj_seg/wiki)   在线测试地址 : <a href="http://demo.nlpcn.org">http://demo.nlpcn.org</href>
 
 
 ##### 摘要
-> 这是一个基于google语义模型+条件随机场模型的中文分词的java实现.
+> 这是一个基于n-Gram+CRF+HMM的中文分词的java实现.
 
 > 分词速度达到每秒钟大约200万字左右（mac air下测试），准确率能达到96%以上
 
-> 目前实现了.中文分词. 中文姓名识别 . 用户自定义词典
+> 目前实现了.中文分词. 中文姓名识别 . 用户自定义词典,关键字提取，自动摘要，关键字标记等功能
 
-> 可以应用到自然语言处理等方面,适用于对分词效果要求搞的各种项目.
+> 可以应用到自然语言处理等方面,适用于对分词效果要求高的各种项目.
 
 
 #####  下载jar
-* 访问 [http://maven.ansj.org/org/ansj/](http://maven.ansj.org/org/ansj/)
-* 下载两个jar 。最好下载最新版 ansj_seg/ 和 tree_split/ 的jar。
+* 访问 [http://maven.nlpcn.org/org/ansj/](http://maven.nlpcn.org/org/ansj/) 最好下载最新版 ansj_seg/
+  * 如果你用的是1.x版本需要下载[tree_split.jar](http://maven.nlpcn.org/org/ansj/tree_split/)。
+  * 如果你用的是2.x版本需要下载[nlp-lang.jar](http://maven.nlpcn.org/org/nlpcn/nlp-lang/)。
+  * 如果你用的是3.x以上版本只需要下载 ansj_seg-[version]-all-in-one.jar 一个jar包就能浪了。  
 * 导入到eclipse ，开始你的程序吧
 
 
 #####  maven
-* 第一步在你的pom.xml中加入.
 
 ````
-  <project...>
-    ....
-
-    <repositories>
-        <repository>
-            <id>mvn-repo</id>
-            <url>http://maven.ansj.org/</url>
-        </repository>
-    </repositories>
-    ....
-</project>
-````
+	<!-- 增加新的maven源 -->	
+	<repositories>
+		<repository>
+			<id>mvn-repo</id>
+			<url>http://maven.nlpcn.org/</url>
+		</repository>
+	</repositories>
 
 
-* 在dependencies标签中粘贴如下:(其实version 以最新的为标准.)
-
-````
     <dependencies>
         ....
         
         <dependency>
             <groupId>org.ansj</groupId>
             <artifactId>ansj_seg</artifactId>
-            <version>1.3</version>
+            <version>5.0.1</version>
         </dependency>
         ....
     </dependencies>
@@ -64,17 +57,60 @@ Ansj中文分词
  String str = "欢迎使用ansj_seg,(ansj中文分词)在这里如果你遇到什么问题都可以联系我.我一定尽我所能.帮助大家.ansj_seg更快,更准,更自由!" ;
  System.out.println(ToAnalysis.parse(str));
  
- ﻿[欢迎/, 使用/, ansj/, _/, seg/, ,/, (/, ansj/, 中文/, 分词/, )/, 在/, 这里/, 如果/, 你/, 遇到/, 什么/, 问题/, 都/, 可以/, 联系/, 我/, 房/, 我/, 一定/, 尽/, 我/, 所/, 能/, ./, 帮助/, 大家/, ./, ansj/, _/, seg/, 更/, 快/, ,/, 更/, 准/, ,/, 更/, 自由/, !/]
+ ﻿欢迎/v,使用/v,ansj/en,_,seg/en,,,(,ansj/en,中文/nz,分词/n,),在/p,这里/r,如果/c,你/r,遇到/v,什么/r,问题/n,都/d,可以/v,联系/v,我/r,./m,我/r,一定/d,尽我所能/l,./m,帮助/v,大家/r,./m,ansj/en,_,seg/en,更快/d,,,更/d,准/a,,,更/d,自由/a,!
 </code></pre>
 
+
+#####  Join Us
+
+心思了很久，不管有没有人帮忙把。我写上来，如果你有兴趣，有热情可以联系我。
+
+* 1.补充文档,增加调用实例和说明
+* 2.将项目提交到maven中央仓库
+* 3.增加一些规则性Recognition，举例[身份证号码识别](https://github.com/NLPchina/ansj_seg/blob/master/src/main/java/org/ansj/recognition/impl/IDCardRecognition.java)，目前未完成的有 `时间识别`，`IP地址识别`，`邮箱识别`,`网址识别`，`词性识别`等...
+* 4.提供更加优化的CRF模型。替换ansj的默认模型。
+* 5.补充测试用例，n多地方测试不完全。如果你有兴趣可以帮忙啦！
+* 6.重构人名识别模型。增加机构名识别等模型。
+* 7.增加句法文法分析
+* 8.建立一个http or netty api,提供分词服务,并提供sdk
+* n.拾遗补漏...
 
 
 
 ----
 ##大事记要
 
+
+#2016年6月05日
+> 蓄谋已久的ansj_seg v5.0正式发布了,也许大家会奇怪为什么没有4.x版本本，额....迷信。本次主要更新内容如下
+* 支持自训练CRF模型的加载。目前支持CRF++ 及 Wapiti两种模型。并提供训练语料的生成工具。
+* 将默认crfmodel移动到jar包内。并压缩了大小控制在16m。
+* 正式发布了DicAnalysis分词策略，使用户自定义词典优先级升高。如果你用户自定义词典足够强建议用这个方式的分词。
+* 将分词结果封装为Result对象。这样便于对结果的二次处理。
+* 增加Recognition接口，对结果的二次处理。可以通过链式调用的方式增加你的操作。同时去掉了FilterModifWord类，用Recognition重新来实现。
+* 删除了DownLibrary.java 类的功能。不再提供自动下载模型的方式
+* 其他有待发现的新功能
+
+
+#2016年1月14日
+> 经过了很久很久.如大家所看.最后一次事件纪要是一年半以前.没什么好说的了.之前因为我的不负责任让这个项目停滞了好久.这次做了很多改进.断断续续,大致如下
+* 大幅提升了NlpAnalysis的准确性
+* 将crfmodel 从jar包中移除.提供``DownLibrary``进行下载
+* 增加了用户自定义词典优先的功能.(原谅我曾经的倔强)通过``UserDefineAnalysis``进行分词
+* 将jar包版本重新改为jdk6
+* 关键词提取增加keyword关键词.可以只是英文了算是
+* 其他种种.....祝愿所有人身体健康万事如意.也祝愿我自己
+
+#2014年6月13日
+> 额，今天是黑色星期五。正在紧张而有序的在做ansj2.0版本的升级。如果你用的版本是2.0x都是预览版。不保证稳定性。所以非版本控。不要跟着更新，这次修改的内容主要有：
+* 修复对reader流偏移量的错误。主要是因为\n\r造成的不可读错误
+* 修复term类的get方法乱用的错误。主要是为了让term对象更好的被json序列号
+* 对核心词典的重构。
+* 放弃tree-split。jar 迁移到nlp-lang.jar中。nlp-lang是我的一个新项目。内容多多大家又兴趣可以到[https://github.com/nlpchina/nlp-lang](https://github.com/nlpchina/nlp-lang)去看看。
+* 重构crf模块。让每个人可以训练自己的crf。补充文档。
+
 #2014年3月10日
-> 此次更新，对tree-split中潜伏了n久的偏移量错误进行了修正。之所以修改这个是要作关键字标红。所以理所当然我把摘要做了，同时对关键词抽取作了一些补充了规则。目前摘要还处于alaph阶段。说白了，光一个摘要都能写一篇博士论文，对于开放场景的摘要其实未必需要高深的算法，这个可以在工程中用，能用，简单，但是无法做到行业顶级，每一个应用如果要做细作精，必须去结合自己的需求，以及业务来作。所以这些基础件理念是用20%的工作完成80%的功能。突然想起一句广告词。好不好看疗效。俄。。。写到这里发现走题了。总结下。这次新增了 。摘要 ，基于query的摘要 ，文章标红，优化了关键词抽取。等功能。很想做一件事情，做一个开源的nlp处理工具包。包括摘要，关键词抽取，倾向性分析，主题发现灯功能，不在这里做了令起一个项目。有兴趣的可以联系我。加油
+> 此次更新，对tree-split中潜伏了n久的偏移量错误进行了修正。之所以修改这个是要作关键字标红。所以理所当然我把摘要做了，同时对关键词抽取作了一些补充了规则。目前摘要还处于alaph阶段。说白了，光一个摘要都能写一篇博士论文，对于开放场景的摘要其实未必需要高深的算法，这个可以在工程中用，能用，简单，但是无法做到行业顶级，每一个应用如果要做细作精，必须去结合自己的需求，以及业务来作。所以这些基础件理念是用20%的工作完成80%的功能。突然想起一句广告词。好不好看疗效。俄。。。写到这里发现走题了。总结下。这次新增了 。摘要 ，基于query的摘要 ，文章标红，优化了关键词抽取。等功能。很想做一件事情，做一个开源的nlp处理工具包。包括摘要，关键词抽取，倾向性分析，主题发现等功能，不在这里做了另起一个项目。有兴趣的可以联系我。加油
 
 #2014年2月10日
 > 终于把文档补全，因为时间比较仓促。本人比较懒，也不喜欢写字。所以断断续续的，大致也有了个好的结果。比较让人高兴的是我找到了一个写文档的方式。之写markdown文件。然后用ajax调用marked进行渲染最后通过hightlight插件。对code标记。:-)全部js搞定。也得力于上面两个优秀的开源项目，妈妈再也不担心我的文档了。:-)。对了利用过年这几天，分词做了大量的改动。经过多次的内心挣扎，放弃了一些分词结果较好的办法。将分词程序控制到了50m一下。对于不需要新词发现的用户。比如做搜索建议用ansj_min版本。只有4m左右大小。方便移动节能环保。

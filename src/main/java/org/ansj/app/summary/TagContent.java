@@ -2,11 +2,10 @@ package org.ansj.app.summary;
 
 import java.util.List;
 
-import love.cq.domain.SmartForest;
-import love.cq.splitWord.SmartGetWord;
-
 import org.ansj.app.keyword.Keyword;
 import org.ansj.app.summary.pojo.Summary;
+import org.nlpcn.commons.lang.tire.SmartGetWord;
+import org.nlpcn.commons.lang.tire.domain.SmartForest;
 
 /**
  * 关键字标红，
@@ -46,7 +45,7 @@ public class TagContent {
 			beginOffe = sgw.offe + temp.length();
 		}
 
-		if (beginOffe < content.length() - 1) {
+		if (beginOffe <= content.length() - 1) {
 			sb.append(content.substring(beginOffe, content.length()));
 		}
 

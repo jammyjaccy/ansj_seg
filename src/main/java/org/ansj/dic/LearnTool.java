@@ -4,15 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import love.cq.domain.SmartForest;
-import love.cq.util.CollectionUtil;
-
 import org.ansj.app.crf.SplitWord;
 import org.ansj.domain.Nature;
 import org.ansj.domain.NewWord;
-import org.ansj.recognition.AsianPersonRecognition;
-import org.ansj.recognition.ForeignPersonRecognition;
+import org.ansj.recognition.arrimpl.AsianPersonRecognition;
+import org.ansj.recognition.arrimpl.ForeignPersonRecognition;
 import org.ansj.util.Graph;
+import org.nlpcn.commons.lang.tire.domain.SmartForest;
+import org.nlpcn.commons.lang.util.CollectionUtil;
 
 /**
  * 新词发现,这是个线程安全的.所以可以多个对象公用一个
@@ -63,12 +62,12 @@ public class LearnTool {
 	}
 
 	private void findAsianPerson(Graph graph) {
-		List<NewWord> newWords = new AsianPersonRecognition(graph.terms).getNewWords();
+		List<NewWord> newWords = new AsianPersonRecognition().getNewWords(graph.terms);
 		addListToTerm(newWords);
 	}
 
 	private void findForeignPerson(Graph graph) {
-		List<NewWord> newWords = new ForeignPersonRecognition(graph.terms).getNewWords();
+		List<NewWord> newWords = new ForeignPersonRecognition().getNewWords(graph.terms);
 		addListToTerm(newWords);
 	}
 
@@ -94,7 +93,12 @@ public class LearnTool {
 			temp.update(newWord.getNature(), newWord.getAllFreq());
 		} else {
 			count++;
-			newWord.setScore(-splitWord.cohesion(newWord.getName()));
+			if(splitWord==null){
+				newWord.setScore(-1);
+			}else{
+				newWord.setScore(-splitWord.cohesion(newWord.getName()));	
+			}
+			
 			synchronized (sf) {
 				sf.add(newWord.getName(), newWord);
 			}
@@ -134,7 +138,7 @@ public class LearnTool {
 	}
 
 	private void valueResult(SmartForest<NewWord> smartForest, HashMap<String, Double> hm, Nature nature) {
-		// TODO Auto-generated method stub
+		
 		if (smartForest == null || smartForest.branches == null) {
 			return;
 		}

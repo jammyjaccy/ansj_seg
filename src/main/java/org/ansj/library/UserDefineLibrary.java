@@ -1,227 +1,241 @@
 package org.ansj.library;
 
-import static org.ansj.util.MyStaticValue.LIBRARYLOG;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
-import love.cq.domain.Forest;
-import love.cq.domain.Value;
-import love.cq.domain.WoodInterface;
-import love.cq.library.Library;
-import love.cq.util.IOUtil;
-import love.cq.util.StringUtil;
-
 import org.ansj.util.MyStaticValue;
+import org.nlpcn.commons.lang.tire.domain.Forest;
+import org.nlpcn.commons.lang.tire.domain.SmartForest;
+import org.nlpcn.commons.lang.tire.domain.Value;
+import org.nlpcn.commons.lang.tire.library.Library;
+import org.nlpcn.commons.lang.util.IOUtil;
+import org.nlpcn.commons.lang.util.StringUtil;
 
-;
+import java.io.*;
+import java.net.URL;
+
+import static org.ansj.util.MyStaticValue.LIBRARYLOG;
 
 /**
  * 用户自定义词典操作类
- * 
+ *
  * @author ansj
  */
 public class UserDefineLibrary {
 
-	public static final String DEFAULT_NATURE = "userDefine";
+    public static final String DEFAULT_NATURE = "userDefine";
 
-	public static final Integer DEFAULT_FREQ = 1000;
+    public static final Integer DEFAULT_FREQ = 1000;
 
-	public static final String DEFAULT_FREQ_STR = "1000";
+    public static final String DEFAULT_FREQ_STR = "1000";
 
-	public static Forest FOREST = null;
+    public static Forest FOREST = null;
 
-	public static Forest ambiguityForest = null;
+    public static Forest ambiguityForest = null;
 
-	static {
-		initUserLibrary();
-		initAmbiguityLibrary();
-	}
+    static {
+        initUserLibrary();
+        initAmbiguityLibrary();
+    }
 
-	/**
-	 * 关键词增加
-	 * 
-	 * @param keyWord
-	 *            所要增加的关键词
-	 * @param nature
-	 *            关键词的词性
-	 * @param freq
-	 *            关键词的词频
-	 */
-	public static void insertWord(String keyword, String nature, int freq) {
-		String[] paramers = new String[2];
-		paramers[0] = nature;
-		paramers[1] = String.valueOf(freq);
-		Value value = new Value(keyword, paramers);
-		Library.insertWord(FOREST, value);
-	}
+    /**
+     * 关键词增加
+     *
+     * @param keyword 所要增加的关键词
+     * @param nature  关键词的词性
+     * @param freq    关键词的词频
+     */
+    public static void insertWord(String keyword, String nature, int freq) {
+        if (FOREST == null) {
+            FOREST = new Forest();
+        }
+        String[] paramers = new String[2];
+        paramers[0] = nature;
+        paramers[1] = String.valueOf(freq);
+        Value value = new Value(keyword, paramers);
+        Library.insertWord(FOREST, value);
+    }
 
-	/**
-	 * 加载纠正词典
-	 */
-	private static void initAmbiguityLibrary() {
-		// TODO Auto-generated method stub
-		String ambiguityLibrary = MyStaticValue.ambiguityLibrary;
-		if (StringUtil.isBlank(ambiguityLibrary)) {
-			LIBRARYLOG.warning("init ambiguity  waring :" + ambiguityLibrary + " because : not find that file or can not to read !");
-			return;
-		}
-		ambiguityLibrary = MyStaticValue.ambiguityLibrary;
-		File file = new File(ambiguityLibrary);
-		if (file.isFile() && file.canRead()) {
-			try {
-				ambiguityForest = Library.makeForest(ambiguityLibrary);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				LIBRARYLOG.warning("init ambiguity  error :" + new File(ambiguityLibrary).getAbsolutePath() + " because : not find that file or can not to read !");
-				e.printStackTrace();
-			}
-			LIBRARYLOG.info("init ambiguityLibrary ok!");
-		} else {
-			LIBRARYLOG.warning("init ambiguity  waring :" + new File(ambiguityLibrary).getAbsolutePath() + " because : not find that file or can not to read !");
-		}
-	}
+    /**
+     * 增加关键词
+     *
+     * @param keyword
+     */
+    public static void insertWord(String keyword) {
+        insertWord(keyword, DEFAULT_NATURE, DEFAULT_FREQ);
+    }
 
-	/**
-	 * 加载用户自定义词典和补充词典
-	 */
-	private static void initUserLibrary() {
-		// TODO Auto-generated method stub
-		try {
-			FOREST = new Forest();
-			// 加载用户自定义词典
-			String userLibrary = MyStaticValue.userLibrary;
-			loadLibrary(FOREST, userLibrary);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-	}
+    /**
+     * 加载纠正词典
+     */
+    private static void initAmbiguityLibrary() {
 
-	// 单个文件加载词典
-	public static void loadFile(Forest forest, File file) {
-		// TODO Auto-generated method stub
-		if (!file.canRead()) {
-			LIBRARYLOG.warning("file in path " + file.getAbsolutePath() + " can not to read!");
-			return;
-		}
-		String temp = null;
-		BufferedReader br = null;
-		String[] strs = null;
-		Value value = null;
-		try {
-			br = IOUtil.getReader(new FileInputStream(file), "UTF-8");
-			while ((temp = br.readLine()) != null) {
-				if (StringUtil.isBlank(temp)) {
-					continue;
-				} else {
-					strs = temp.split("\t");
+        File[] lib = findLibrary(MyStaticValue.ambiguityLibrary);
 
-					strs[0] = strs[0].toLowerCase();
+        if (lib.length > 0) {
+            ambiguityForest = new Forest();
+            for (File file : lib) {
+                try (BufferedReader br = IOUtil.getReader(file, "utf-8")) {
+                    String temp;
+                    while ((temp = br.readLine()) != null) {
+                        if (StringUtil.isNotBlank(temp)) {
+                            temp = StringUtil.trim(temp);
+                            String[] split = temp.split("\t");
+                            StringBuilder sb = new StringBuilder();
+                            if (split.length % 2 != 0) {
+                                LIBRARYLOG.error("init ambiguity  error in line :" + temp + " format err !");
+                            }
+                            for (int i = 0; i < split.length; i += 2) {
+                                sb.append(split[i]);
+                            }
+                            ambiguityForest.addBranch(sb.toString(), split);
+                        }
+                    }
 
-					// 如何核心辞典存在那么就放弃
-					if (MyStaticValue.isSkipUserDefine && InitDictionary.getWordId(strs[0]) > 0) {
-						continue;
-					}
+                } catch (UnsupportedEncodingException e) {
+                    LIBRARYLOG.warn("不支持的编码", e);
+                } catch (IOException e) {
+                    LIBRARYLOG.warn("Init ambiguity library error :"+ e.getMessage()+", path: "+ file.getPath());
+                }
+            }
 
-					if (strs.length != 3) {
-						value = new Value(strs[0], DEFAULT_NATURE, DEFAULT_FREQ_STR);
-					} else {
-						value = new Value(strs[0], strs[1], strs[2]);
-					}
-					Library.insertWord(forest, value);
-				}
-			}
-			LIBRARYLOG.info("init user userLibrary ok path is : " + file.getAbsolutePath());
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			IOUtil.close(br);
-			br = null;
-		}
-	}
+            LIBRARYLOG.info("Init ambiguity library ok!");
 
-	/**
-	 * 加载词典,传入一本词典的路径.或者目录.词典后缀必须为.dic
-	 */
-	public static void loadLibrary(Forest forest, String path) {
-		// 加载用户自定义词典
-		File file = null;
-		if (path != null) {
-			file = new File(path);
-			if (!file.canRead() || file.isHidden()) {
-				LIBRARYLOG.warning("init userLibrary  waring :" + new File(path).getAbsolutePath() + " because : not find that file or can not to read !");
-				return;
-			}
-			if (file.isFile()) {
-				loadFile(forest, file);
-			} else if (file.isDirectory()) {
-				File[] files = file.listFiles();
-				for (int i = 0; i < files.length; i++) {
-					if (files[i].getName().trim().endsWith(".dic")) {
-						loadFile(forest, files[i]);
-					}
-				}
-			} else {
-				LIBRARYLOG.warning("init user library  error :" + new File(path).getAbsolutePath() + " because : not find that file !");
-			}
-		}
-	}
+        } else {
+            LIBRARYLOG.warn("Init ambiguity library warning :"+MyStaticValue.ambiguityLibrary+" because : file not found or failed to read !");
+        }
 
-	/**
-	 * 删除关键词
-	 */
-	public static void removeWord(String word) {
-		Library.removeWord(FOREST, word);
-	}
+    }
+    
+    /**
+     * 加载用户自定义词典和补充词典
+     */
+    private static void initUserLibrary() {
+        FOREST = MyStaticValue.getDicForest();
+    }
 
-	public static String[] getParams(String word) {
-		WoodInterface temp = FOREST;
-		for (int i = 0; i < word.length(); i++) {
-			temp = temp.get(word.charAt(i));
-			if (temp == null) {
-				return null;
-			}
-		}
-		if (temp.getStatus() > 1) {
-			return temp.getParams();
-		} else {
-			return null;
-		}
-	}
 
-	public static String[] getParams(Forest forest, String word) {
-		WoodInterface temp = forest;
-		for (int i = 0; i < word.length(); i++) {
-			temp = temp.get(word.charAt(i));
-			if (temp == null) {
-				return null;
-			}
-		}
-		if (temp.getStatus() > 1) {
-			return temp.getParams();
-		} else {
-			return null;
-		}
-	}
+    /**
+     * 加载词典,传入一本词典的路径.或者目录.词典后缀必须为.dic 按文件名称顺序加载
+     */
+    public static void loadLibrary(Forest forest, String path) {
 
-	public static boolean contains(String word) {
-		return getParams(word) != null;
-	}
+        File[] lib = findLibrary(path);
 
-	/**
-	 * 将用户自定义词典清空
-	 */
-	public static void clear() {
-		FOREST.clear();
-	}
+        if (lib.length > 0) {
+            for (File file : lib) {
+                String temp;
+                String[] strs;
+                Value value;
+                try (BufferedReader br = IOUtil.getReader(new FileInputStream(file), "UTF-8")) {
+                    while ((temp = br.readLine()) != null) {
+                        if (StringUtil.isNotBlank(temp)) {
+                            temp = StringUtil.trim(temp);
+                            strs = temp.split("\t");
+                            strs[0] = strs[0].toLowerCase();
+                            // 如何核心辞典存在那么就放弃
+                            if (MyStaticValue.isSkipUserDefine && DATDictionary.getId(strs[0]) > 0) {
+                                continue;
+                            }
+                            if (strs.length != 3) {
+                                value = new Value(strs[0], DEFAULT_NATURE, DEFAULT_FREQ_STR);
+                            } else {
+                                value = new Value(strs[0], strs[1], strs[2]);
+                            }
+                            Library.insertWord(forest, value);
+                        }
+                    }
+                } catch (UnsupportedEncodingException e) {
+                    LIBRARYLOG.warn("不支持的编码", e);
+                } catch (IOException e) {
+                    LIBRARYLOG.warn("Init user library error :"+e.getMessage()+", path: "+file.getPath());
+                }
+            }
+
+            LIBRARYLOG.info("Init user library ok!");
+
+
+        } else {
+            LIBRARYLOG.warn("Init user library  error :"+path+" because : not find that file !");
+        }
+
+    }
+
+    /**
+     * 删除关键词
+     */
+    public static void removeWord(String word) {
+        Library.removeWord(FOREST, word);
+    }
+
+    public static String[] getParams(String word) {
+        return getParams(FOREST, word);
+    }
+
+    public static String[] getParams(Forest forest, String word) {
+        SmartForest<String[]> temp = forest;
+        for (int i = 0; i < word.length(); i++) {
+            temp = temp.get(word.charAt(i));
+            if (temp == null) {
+                return null;
+            }
+        }
+        if (temp.getStatus() > 1) {
+            return temp.getParam();
+        } else {
+            return null;
+        }
+    }
+
+    public static boolean contains(String word) {
+        return getParams(word) != null;
+    }
+
+    /**
+     * 将用户自定义词典清空
+     */
+    public static void clear() {
+        FOREST.clear();
+    }
+
+
+    /**
+     * Load files
+     *
+     * @param path file path
+     * @return File Array
+     */
+    private static File[] findLibrary(String path) {
+        File[] libs = new File[0];
+        File file = new File(path);
+        if (!file.exists()) {
+            // Try load from classpath
+            URL url = UserDefineLibrary.class.getClassLoader().getResource(path);
+            if (url != null) {
+                file = new File(url.getPath());
+            }
+        }
+
+        if (file.canRead()) {
+
+            if (file.isFile()) {
+                libs = new File[1];
+                libs[0] = file;
+            } else if (file.isDirectory()) {
+                File[] files = file.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if (name.endsWith(".dic") && dir.canRead()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                });
+                if (files != null && files.length > 0) {
+                    libs = files;
+                }
+            }
+        }
+        return libs;
+    }
 
 }

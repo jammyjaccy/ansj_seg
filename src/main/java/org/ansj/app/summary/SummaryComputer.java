@@ -5,14 +5,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import love.cq.domain.SmartForest;
-import love.cq.splitWord.SmartGetWord;
-
 import org.ansj.app.keyword.KeyWordComputer;
 import org.ansj.app.keyword.Keyword;
 import org.ansj.app.summary.pojo.Summary;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
+import org.nlpcn.commons.lang.tire.SmartGetWord;
+import org.nlpcn.commons.lang.tire.domain.SmartForest;
+import org.nlpcn.commons.lang.util.MapCount;
 
 /**
  * 自动摘要,同时返回关键词
@@ -72,14 +72,14 @@ public class SummaryComputer {
 	 */
 	public Summary toSummary(String query) {
 
-		List<Term> parse = NlpAnalysis.parse(query);
+		List<Term> parse = NlpAnalysis.parse(query).getTerms();
 
 		List<Keyword> keywords = new ArrayList<Keyword>();
 		for (Term term : parse) {
-			if (FILTER_SET.contains(term.getNatrue().natureStr)) {
+			if (FILTER_SET.contains(term.natrue().natureStr)) {
 				continue;
 			}
-			keywords.add(new Keyword(term.getName(), term.getTermNatures().allFreq, 1));
+			keywords.add(new Keyword(term.getName(), term.termNatures().allFreq, 1));
 		}
 
 		return toSummary(keywords);
@@ -121,7 +121,7 @@ public class SummaryComputer {
 
 		// 先断句
 		List<Sentence> sentences = toSentenceList(content.toCharArray());
-
+		
 		for (Sentence sentence : sentences) {
 			computeScore(sentence, sf);
 		}
@@ -129,37 +129,46 @@ public class SummaryComputer {
 		double maxScore = 0;
 		int maxIndex = 0;
 
+		MapCount<String> mc = new MapCount<>();
+
 		for (int i = 0; i < sentences.size(); i++) {
 			double tempScore = sentences.get(i).score;
 			int tempLength = sentences.get(i).value.length();
+			mc.addAll(sentences.get(i).mc.get());
 
 			if (tempLength >= len) {
+				tempScore = tempScore * mc.get().size();
 				if (maxScore < tempScore) {
 					maxScore = tempScore;
 					maxIndex = i;
 					continue;
 				}
+				mc.get().clear();
 			}
 			for (int j = i + 1; j < sentences.size(); j++) {
 				tempScore += sentences.get(j).score;
 				tempLength += sentences.get(j).value.length();
+				mc.addAll(sentences.get(j).mc.get());
+
 				if (tempLength >= len) {
+					tempScore = tempScore * mc.get().size();
 					if (maxScore < tempScore) {
 						maxScore = tempScore;
 						maxIndex = i;
-						break;
 					}
+					mc.get().clear();
+					break;
 				}
 			}
 
 			if (tempLength < len) {
+				tempScore = tempScore * mc.get().size();
 				if (maxScore < tempScore) {
 					maxScore = tempScore;
 					maxIndex = i;
 					break;
 				}
-			} else {
-				break;
+				mc.get().clear();
 			}
 		}
 
@@ -211,8 +220,9 @@ public class SummaryComputer {
 	 */
 	private void computeScore(Sentence sentence, SmartForest<Double> forest) {
 		SmartGetWord<Double> sgw = new SmartGetWord<Double>(forest, sentence.value);
-		while (sgw.getFrontWords() != null) {
-			sentence.score += sgw.getParam();
+		String name = null;
+		while ((name = sgw.getFrontWords()) != null) {
+			sentence.updateScore(name, sgw.getParam());
 		}
 		if (sentence.score == 0) {
 			sentence.score = sentence.value.length() * -0.005;
@@ -240,33 +250,23 @@ public class SummaryComputer {
 					sb = new StringBuilder();
 				}
 				break;
-			case ' ':
+			//case ' ':
 			case '	':
+			case '　':
 			case ' ':
+			case ',':
 			case '。':
-				insertIntoList(sb, sentences);
-				sb = new StringBuilder();
-				break;
 			case ';':
 			case '；':
-				insertIntoList(sb, sentences);
-				sb = new StringBuilder();
-				break;
 			case '!':
 			case '！':
-				insertIntoList(sb, sentences);
-				sb = new StringBuilder();
-				break;
+			case '，':
 			case '?':
 			case '？':
-				insertIntoList(sb, sentences);
-				sb = new StringBuilder();
-				break;
 			case '\n':
 			case '\r':
 				insertIntoList(sb, sentences);
 				sb = new StringBuilder();
-				break;
 			}
 		}
 
@@ -287,12 +287,20 @@ public class SummaryComputer {
 	/*
 	 * 句子对象
 	 */
-	class Sentence {
+	public class Sentence {
 		String value;
-		double score;
+		private double score;
+
+		private MapCount<String> mc = new MapCount<>();
 
 		public Sentence(String value) {
 			this.value = value.trim();
+		}
+
+		public void updateScore(String name, double score) {
+			mc.add(name);
+			Double size = mc.get().get(name);
+			this.score += score / size;
 		}
 
 		public String toString() {

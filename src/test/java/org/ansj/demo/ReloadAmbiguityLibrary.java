@@ -1,10 +1,9 @@
 package org.ansj.demo;
 
 import org.ansj.library.UserDefineLibrary;
-
-import love.cq.domain.Forest;
-import love.cq.domain.Value;
-import love.cq.library.Library;
+import org.nlpcn.commons.lang.tire.domain.Forest;
+import org.nlpcn.commons.lang.tire.domain.Value;
+import org.nlpcn.commons.lang.tire.library.Library;
 
 /**
  * 重新加载用户自定义辞典的两种方式
@@ -30,7 +29,7 @@ public class ReloadAmbiguityLibrary {
 	}
 
 	private static void loadFormStr() {
-		// TODO Auto-generated method stub
+		
 		Forest forest = new Forest();
 
 		Value value = new Value("三个和尚", "三个", "m", "和尚", "n");
@@ -40,7 +39,7 @@ public class ReloadAmbiguityLibrary {
 	}
 
 	private static void loadFormFile() throws Exception {
-		// TODO Auto-generated method stub
+		
 		// make new forest
 		Forest forest = Library.makeForest("new_Library_Path");
 

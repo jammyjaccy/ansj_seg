@@ -1,13 +1,7 @@
 package org.ansj.splitWord.impl;
 
-import static org.ansj.library.InitDictionary.arrayLength;
-import static org.ansj.library.InitDictionary.base;
-import static org.ansj.library.InitDictionary.check;
-import static org.ansj.library.InitDictionary.status;
-import static org.ansj.library.InitDictionary.termNatures;
-import static org.ansj.library.InitDictionary.words;
-
-import org.ansj.domain.TermNatures;
+import org.ansj.domain.AnsjItem;
+import org.ansj.library.DATDictionary;
 import org.ansj.splitWord.GetWords;
 
 public class GetWordsImpl implements GetWords {
@@ -72,8 +66,13 @@ public class GetWordsImpl implements GetWords {
 					tempBaseValue = baseValue;
 					return str;
 				} else {
-					i = start;
-					start++;
+					// i = start;
+					// start++;
+					// end = 0;
+					// baseValue = 0;
+					// break;
+					start=i;
+					i--;
 					end = 0;
 					baseValue = 0;
 					break;
@@ -82,7 +81,7 @@ public class GetWordsImpl implements GetWords {
 				i++;
 				offe = start;
 				tempBaseValue = baseValue;
-				return words[tempBaseValue];
+				return DATDictionary.getItem(tempBaseValue).getName();
 			case 3:
 				offe = start;
 				start++;
@@ -90,7 +89,7 @@ public class GetWordsImpl implements GetWords {
 				end = 0;
 				tempBaseValue = baseValue;
 				baseValue = 0;
-				return words[tempBaseValue];
+				return DATDictionary.getItem(tempBaseValue).getName();
 			}
 
 		}
@@ -113,35 +112,19 @@ public class GetWordsImpl implements GetWords {
 	 */
 	private int getStatement() {
 		checkValue = baseValue;
-		baseValue = base[checkValue] + charHashCode;
-		if (baseValue < arrayLength && (check[baseValue] == checkValue || check[baseValue] == -1)) {
-			return status[baseValue];
+		baseValue = DATDictionary.getItem(checkValue).getBase() + charHashCode;
+		if (baseValue < DATDictionary.arrayLength && (DATDictionary.getItem(baseValue).getCheck() == checkValue || DATDictionary.getItem(baseValue).getCheck() == -1)) {
+			return DATDictionary.getItem(baseValue).getStatus();
 		}
 		return 0;
 	}
 
-	public byte getStatus() {
-		// TODO Auto-generated method stub
-		return status[tempBaseValue];
-	}
-
-	/**
-	 * 获得当前词的词性
-	 * 
-	 * @return
-	 */
-	public TermNatures getTermNatures() {
-		// TODO Auto-generated method stub
-		TermNatures tns = termNatures[tempBaseValue];
-		if (tns == null) {
-			return TermNatures.NW;
-		}
-		return tns;
+	public AnsjItem getItem() {
+ 		return DATDictionary.getItem(tempBaseValue);
 	}
 
 	@Override
 	public int getOffe() {
-		// TODO Auto-generated method stub
 		return offe;
 	}
 

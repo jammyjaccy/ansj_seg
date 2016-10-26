@@ -5,19 +5,25 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
+import org.ansj.util.MyStaticValue;
+import org.nlpcn.commons.lang.util.logging.Log;
+
 /**
  * 加载词典用的类
  * 
  * @author ansj
  */
 public class DicReader {
+
+	private static final Log logger = MyStaticValue.getLog() ;
+
 	public static BufferedReader getReader(String name) {
 		// maven工程修改词典加载方式
 		InputStream in = DicReader.class.getResourceAsStream("/" + name);
 		try {
 			return new BufferedReader(new InputStreamReader(in, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+			logger.warn("不支持的编码", e);
 		}
 		return null;
 	}

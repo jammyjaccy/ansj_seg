@@ -1,11 +1,13 @@
 package org.ansj.splitWord.analysis;
 
-import java.io.BufferedReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.Analysis;
+import org.ansj.util.AnsjReader;
 import org.ansj.util.Graph;
 
 /**
@@ -18,17 +20,14 @@ public class BaseAnalysis extends Analysis {
 
 	@Override
 	protected List<Term> getResult(final Graph graph) {
-		// TODO Auto-generated method stub
 		Merger merger = new Merger() {
 			@Override
 			public List<Term> merger() {
-				// TODO Auto-generated method stub
 				graph.walkPath();
 				return getResult();
 			}
 
 			private List<Term> getResult() {
-				// TODO Auto-generated method stub
 				List<Term> result = new ArrayList<Term>();
 				int length = graph.terms.length - 1;
 				for (int i = 0; i < length; i++) {
@@ -44,14 +43,14 @@ public class BaseAnalysis extends Analysis {
 		return merger.merger();
 	}
 
-	private BaseAnalysis() {
+	public BaseAnalysis() {
 	};
 
-	public BaseAnalysis(BufferedReader reader) {
-		super.resetContent(reader);
+	public BaseAnalysis(Reader reader) {
+		super.resetContent(new AnsjReader(reader));
 	}
 
-	public static List<Term> parse(String str) {
+	public static Result parse(String str) {
 		return new BaseAnalysis().parseStr(str);
 	}
 }

@@ -9,7 +9,7 @@ import org.ansj.domain.Term;
 import org.ansj.domain.TermNatures;
 import org.ansj.library.NatureLibrary;
 import org.ansj.library.company.CompanyAttrLibrary;
-import org.ansj.recognition.ForeignPersonRecognition;
+import org.ansj.recognition.arrimpl.ForeignPersonRecognition;
 
 /**
  * term的操作类
@@ -27,9 +27,9 @@ public class TermUtil {
 	 */
 	public static Term makeNewTermNum(Term from, Term to, TermNatures termNatures) {
 		Term term = new Term(from.getName() + to.getName(), from.getOffe(), termNatures);
-		term.getTermNatures().numAttr = from.getTermNatures().numAttr;
-		TermUtil.termLink(term, to.getTo());
-		TermUtil.termLink(term.getFrom(), term);
+		term.termNatures().numAttr = from.termNatures().numAttr;
+		TermUtil.termLink(term, to.to());
+		TermUtil.termLink(term.from(), term);
 		return term;
 	}
 
@@ -40,30 +40,83 @@ public class TermUtil {
 		to.setFrom(from);
 	}
 
+	public static enum InsertTermType{
+		/**
+		 * 跳过 0 
+		 */
+		SKIP,
+		/**
+		 * 替换 1
+		 */
+		REPLACE,
+		/**
+		 * 累积分值 保证顺序,由大到小 2
+		 */
+		SCORE_ADD_SORT
+	}
+	
 	/**
-	 * 将一个term插入到链表中的对应位置中,应该是词长由大到小
+	 * 将一个term插入到链表中的对应位置中, 如果这个term已经存在参照type type 0.跳过 1. 替换 2.累积分值 保证顺序,由大到小
 	 * 
 	 * @param terms
 	 * @param term
 	 */
-	public static void insertTerm(Term[] terms, Term term) {
-		Term temp = terms[term.getOffe()];
-		//插入到最右面
-		Term last = temp ;
-		while((temp = temp.getNext())!=null){
-			last = temp ; 
+	public static void insertTerm(Term[] terms, Term term, InsertTermType type) {
+		Term self = terms[term.getOffe()];
+
+		if (self == null) {
+			terms[term.getOffe()] = term;
+			return;
 		}
-		last.setNext(term) ;
+
+		int len = term.getName().length();
+
+		// 如果是第一位置
+		if (self.getName().length() == len) {
+			if (type == InsertTermType.REPLACE) {
+				term.setNext(self.next());
+				terms[term.getOffe()] = term;
+			} else if (type == InsertTermType.SCORE_ADD_SORT) {
+				self.score(self.score() + term.score());
+				self.selfScore(self.selfScore() + term.selfScore());
+			}
+			return;
+		}
+		
+		if(self.getName().length() > len){
+			term.setNext(self) ;
+			terms[term.getOffe()] = term;
+			return;
+		}
+
+		Term next = self;
+		Term before = self;
+		while ((next = before.next()) != null) {
+			if (next.getName().length() == len) {
+				if (type == InsertTermType.REPLACE) {
+					term.setNext(next.next());
+					before.setNext(term);
+				} else if (type == InsertTermType.SCORE_ADD_SORT) {
+					next.score(next.score() + term.score());
+					next.selfScore(next.selfScore() + term.selfScore());
+				}
+				return;
+			} else if (next.getName().length() > len) {
+				before.setNext(term);
+				term.setNext(next);
+				return;
+			}
+			before = next;
+		}
+
+		before.setNext(term); // 如果都没有命中
 	}
 
 	public static void insertTermNum(Term[] terms, Term term) {
-		// TODO Auto-generated method stub
 		terms[term.getOffe()] = term;
-
 	}
 
 	public static void insertTerm(Term[] terms, List<Term> tempList, TermNatures nr) {
-		// TODO Auto-generated method stub
 		StringBuilder sb = new StringBuilder();
 		int offe = tempList.get(0).getOffe();
 		for (Term term : tempList) {
@@ -75,7 +128,7 @@ public class TermUtil {
 	}
 
 	protected static Term setToAndfrom(Term to, Term from) {
-		// TODO Auto-generated method stub
+		
 		from.setTo(to);
 		to.setFrom(from);
 		return from;
@@ -89,7 +142,7 @@ public class TermUtil {
 	 * @return 返回是null说明已经是最细颗粒度
 	 */
 	public static void parseNature(Term term) {
-		if (!Nature.NW.equals(term.getNatrue())) {
+		if (!Nature.NW.equals(term.natrue())) {
 			return;
 		}
 
@@ -134,10 +187,10 @@ public class TermUtil {
 	 * @return
 	 */
 	public static List<Term> getSubTerm(Term from, Term to) {
-		// TODO Auto-generated method stub
+		
 		List<Term> subTerm = new ArrayList<Term>(3);
 
-		while ((from = from.getTo()) != to) {
+		while ((from = from.to()) != to) {
 			subTerm.add(from);
 		}
 
